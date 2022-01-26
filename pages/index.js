@@ -1,34 +1,7 @@
 import appConfig from "../config.json";
+import {useState} from "react";
+import {useRouter} from "next/router";
 import { Box, Button, Text, TextField, Image } from '@skynexui/components';
-
-function GlobalStyle() {
-    return (
-        <style global jsx>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          list-style: none;
-        }
-        body {
-          font-family: 'Open Sans', sans-serif;
-        }
-        /* App fit Height */ 
-        html, body, #__next {
-          min-height: 100vh;
-          display: flex;
-          flex: 1;
-        }
-        #__next {
-          flex: 1;
-        }
-        #__next > * {
-          flex: 1;
-        }
-        /* ./App fit Height */ 
-      `}</style>
-    );
-}
 
 function Title(props) {
     const Tag = props.tag || 'h1';
@@ -47,11 +20,21 @@ function Title(props) {
 }
 
 export default function PaginaInicial() {
-    const username = 'winstein27';
+    const [username, setUsername] = useState("winstein27");
+    const router = useRouter();
+    
+    function handleUsernameChange(event) {
+        const newUsername = event.target.value;
+        setUsername(newUsername);
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        router.push("/chat");
+    }
 
     return (
         <>
-            <GlobalStyle />
             <Box
                 styleSheet={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -78,6 +61,7 @@ export default function PaginaInicial() {
                     {/* Formulário */}
                     <Box
                         as="form"
+                        onSubmit={event => handleFormSubmit(event)}
                         styleSheet={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                             width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '32px',
@@ -89,6 +73,8 @@ export default function PaginaInicial() {
                         </Text>
 
                         <TextField
+                            value={username}
+                            onChange={event => handleUsernameChange(event)}
                             fullWidth
                             textFieldColors={{
                                 neutral: {
@@ -130,13 +116,16 @@ export default function PaginaInicial() {
                             minHeight: '240px',
                         }}
                     >
-                        <Image
+                        {username.length > 2 && 
+                            <Image
                             styleSheet={{
                                 borderRadius: '50%',
                                 marginBottom: '16px',
                             }}
                             src={`https://github.com/${username}.png`}
-                        />
+                            />
+                        }
+                        
                         <Text
                             variant="body4"
                             styleSheet={{
