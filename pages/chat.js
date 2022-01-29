@@ -1,6 +1,6 @@
-import { Box, Text, TextField, Image, Button } from '@skynexui/components';
+import { Box, Text, TextField, Image, Button, Icon } from '@skynexui/components';
 import React, { useState } from 'react';
-import {useRouter} from 'next/router';
+import { useRouter } from 'next/router';
 import appConfig from '../config.json';
 
 export default function ChatPage() {
@@ -12,15 +12,23 @@ export default function ChatPage() {
     function handleMessageKeyPress(event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            const newMessage = {
-                id: messages.length,
-                from: "vanessametonini",
-                text: message
-            };
-
-            setMessages([newMessage, ...messages]);
-            setMessage("");
+            addMessage();
         }
+    }
+
+    function handleSendClick(event) {
+        addMessage();
+    }
+
+    const addMessage = () => {
+        const newMessage = {
+            id: messages.length,
+            from: "vanessametonini",
+            text: message
+        };
+
+        setMessages([newMessage, ...messages]);
+        setMessage("");
     }
 
     return (
@@ -61,7 +69,7 @@ export default function ChatPage() {
                     }}
                 >
 
-                    <MessagesList messages={messages} />
+                    <MessagesList messages={messages} setMessages={setMessages} />
 
                     <Box
                         as="form"
@@ -87,6 +95,16 @@ export default function ChatPage() {
                                 backgroundColor: appConfig.theme.colors.neutrals[800],
                                 marginRight: '12px',
                                 color: appConfig.theme.colors.neutrals[200],
+                            }}
+                        />
+                        <Button
+                            label='Enviar'
+                            onClick={event => handleSendClick(event)}
+                            buttonColors={{
+                                contrastColor: appConfig.theme.colors.neutrals["000"],
+                                mainColor: appConfig.theme.colors.primary[500],
+                                mainColorLight: appConfig.theme.colors.primary[400],
+                                mainColorStrong: appConfig.theme.colors.primary[600],
                             }}
                         />
                     </Box>
@@ -115,6 +133,10 @@ function Header(props) {
 }
 
 function MessagesList(props) {
+    function handleDeleteClick(messageId) {
+        props.setMessages(props.messages.filter(message => message.id !== messageId));
+    }
+
     return (
         <Box
             tag="ul"
@@ -141,11 +163,21 @@ function MessagesList(props) {
                             }
                         }}
                     >
+                        <Icon
+                            onClick={() => handleDeleteClick(message.id)}
+                            name="FaRegTrashAlt"
+                            styleSheet={{
+                                display: 'inline-block',
+                                width: '20px',
+                                height: '20px',
+                            }}
+                        />
                         <Box
                             styleSheet={{
                                 marginBottom: '8px',
                             }}
                         >
+
                             <Image
                                 styleSheet={{
                                     width: '20px',
