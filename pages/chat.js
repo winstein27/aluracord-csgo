@@ -1,13 +1,28 @@
 import { Box, Text, TextField, Image, Button, Icon } from '@skynexui/components';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import appConfig from '../config.json';
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://ujhykihdloyxkunafdhv.supabase.co";
+const SUPABASE_ANON_PUBLIC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzUwMDQyNCwiZXhwIjoxOTU5MDc2NDI0fQ.zeQ853Ag0_2oFq7SQqI8HZvY_-WZyfkhsSY4ohBm3FI";
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_PUBLIC);
 
 export default function ChatPage() {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
 
     const router = useRouter();
+
+    useEffect(() => {
+        supabaseClient
+            .from("message")
+            .select("*")
+            .order("id", { ascending: false })
+            .then(({ data }) => {
+                setMessages(data);
+            })
+    }, []);
 
     function handleMessageKeyPress(event) {
         if (event.key === "Enter") {
@@ -22,12 +37,17 @@ export default function ChatPage() {
 
     const addMessage = () => {
         const newMessage = {
-            id: messages.length,
-            from: "vanessametonini",
+            from: "winstein27",
             text: message
         };
 
-        setMessages([newMessage, ...messages]);
+        supabaseClient
+        .from("message")
+        .insert([newMessage])
+        .then(({ data }) => {
+            setMessages([data[0], ...messages]);
+        });
+        
         setMessage("");
     }
 
@@ -69,7 +89,7 @@ export default function ChatPage() {
                     }}
                 >
 
-                    <MessagesList messages={messages} setMessages={setMessages} />
+                    <MessagesList messages={messages} setMessages={setMessages} supabase={supabaseClient} />
 
                     <Box
                         as="form"
@@ -134,7 +154,13 @@ function Header(props) {
 
 function MessagesList(props) {
     function handleDeleteClick(messageId) {
-        props.setMessages(props.messages.filter(message => message.id !== messageId));
+        props.supabase
+        .from("message")
+        .delete()
+        .match({ id: messageId })
+        .then(() => {
+            props.setMessages(props.messages.filter(message => message.id !== messageId));
+        });
     }
 
     return (
@@ -186,7 +212,7 @@ function MessagesList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/vanessametonini.png`}
+                                src={`https://github.com/${message.from}.png`}
                             />
                             <Text tag="strong">
                                 {message.from}
