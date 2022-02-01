@@ -30,7 +30,7 @@ export default function PaginaInicial() {
 
     function handleFormSubmit(event) {
         event.preventDefault();
-        router.push("/chat");
+        router.push(`/chat?username=${username}`);
     }
 
     return (

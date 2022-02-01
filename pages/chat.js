@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import appConfig from '../config.json';
 import { createClient } from "@supabase/supabase-js";
+import { ButtonSendSticker } from "../src/components/ButtonSendSticker"
 
 const SUPABASE_URL = "https://ujhykihdloyxkunafdhv.supabase.co";
 const SUPABASE_ANON_PUBLIC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzUwMDQyNCwiZXhwIjoxOTU5MDc2NDI0fQ.zeQ853Ag0_2oFq7SQqI8HZvY_-WZyfkhsSY4ohBm3FI";
@@ -21,8 +22,25 @@ export default function ChatPage() {
             .order("id", { ascending: false })
             .then(({ data }) => {
                 setMessages(data);
-            })
+            });
+
+        const subscription = listenToRealTimeMessages(newMessage => {
+            setMessages(messagesList => [newMessage, ...messagesList]);
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        }
     }, []);
+
+    function listenToRealTimeMessages(loadMessages) {
+        return supabaseClient
+            .from("message")
+            .on("INSERT", live => {
+                loadMessages(live.new);
+            })
+            .subscribe();
+    }
 
     function handleMessageKeyPress(event) {
         if (event.key === "Enter") {
@@ -31,24 +49,31 @@ export default function ChatPage() {
         }
     }
 
-    function handleSendClick(event) {
-        addMessage();
-    }
-
     const addMessage = () => {
         const newMessage = {
-            from: "winstein27",
+            from: router.query.username,
             text: message
         };
 
+        addMessageToDatabase(newMessage);
+        
+        setMessage("");
+    }
+
+    function handleStickerClick(sticker) {
+        const newMessage = {
+            from: router.query.username,
+            text: `:sticker: ${sticker}`
+        }
+
+        addMessageToDatabase(newMessage);
+    }
+
+    function addMessageToDatabase(newMessage) {
         supabaseClient
         .from("message")
         .insert([newMessage])
-        .then(({ data }) => {
-            setMessages([data[0], ...messages]);
-        });
-        
-        setMessage("");
+        .then(() => null);
     }
 
     return (
@@ -119,7 +144,7 @@ export default function ChatPage() {
                         />
                         <Button
                             label='Enviar'
-                            onClick={event => handleSendClick(event)}
+                            onClick={addMessage}
                             buttonColors={{
                                 contrastColor: appConfig.theme.colors.neutrals["000"],
                                 mainColor: appConfig.theme.colors.primary[500],
@@ -127,6 +152,9 @@ export default function ChatPage() {
                                 mainColorStrong: appConfig.theme.colors.primary[600],
                             }}
                         />
+                        <ButtonSendSticker onStickerClick={(sticker) => {
+                            handleStickerClick(sticker);
+                        }} />
                     </Box>
                 </Box>
             </Box>
@@ -228,7 +256,10 @@ function MessagesList(props) {
                                 {(new Date().toLocaleDateString())}
                             </Text>
                         </Box>
-                        {message.text}
+                        {message.text.startsWith(":sticker:")
+                            ? <Image src={message.text.replace(":sticker: ", "")} />
+                            : message.text
+                        }
                     </Text>
                 )
             })}
